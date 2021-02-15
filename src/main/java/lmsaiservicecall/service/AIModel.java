@@ -10,15 +10,17 @@ import com.google.gson.GsonBuilder;
 import lmsaiservicecall.model.AIModelRequest;
 import lmsaiservicecall.model.AIModelResp;
 import lmsaiservicecall.util.AIModelConstants;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class AIModel {
 
-	private AIModel() {}
 	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(AIModel.class);
 
 	private static final OkHttpClient httpClient = new OkHttpClient().newBuilder().readTimeout(5, TimeUnit.MINUTES).connectTimeout(5, TimeUnit.MINUTES).build();

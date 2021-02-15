@@ -2,17 +2,33 @@ package lmsaiservicecall.model;
 
 import java.io.Serializable;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class ModelReq implements Serializable{
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 2065417391286706519L;
 	private String RequestId;//NOSONAR
+	private String TaskId;//NOSONAR
 	private String RequestType;//NOSONAR
 	private String ImageName;//NOSONAR
 	private String ImageType;//NOSONAR
 	private String UploadSignedURL;//NOSONAR
 	private String DownloadSignedURL;//NOSONAR
+	public String getTaskId() {
+		return TaskId;
+	}
+	public void setTaskId(String taskId) {
+		TaskId = taskId;
+	}
 	/**
 	 * @return the denoiseRequestId
 	 */
@@ -81,9 +97,9 @@ public class ModelReq implements Serializable{
 	}
 	@Override
 	public String toString() {
-		return "ModelReq [RequestId=" + RequestId + ", RequestType=" + RequestType + ", ImageName=" + ImageName
-				+ ", ImageType=" + ImageType + ", UploadSignedURL=" + UploadSignedURL + ", DownloadSignedURL="
-				+ DownloadSignedURL + "]";
+		return "ModelReq [RequestId=" + RequestId + ", TaskId=" + TaskId + ", RequestType=" + RequestType
+				+ ", ImageName=" + ImageName + ", ImageType=" + ImageType + ", UploadSignedURL=" + UploadSignedURL
+				+ ", DownloadSignedURL=" + DownloadSignedURL + "]";
 	}
 
 }

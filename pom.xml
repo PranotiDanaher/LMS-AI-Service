@@ -14,7 +14,8 @@
 		<powermock.version>1.6.5</powermock.version>
 		<!-- sonar config -->
 		<jacoco.version>0.8.5</jacoco.version>
-		<sonar.host.url>http://sonarqube-pid-elb-1097049682.us-east-1.elb.amazonaws.com</sonar.host.url>
+		<sonar.host.url>http://sonarqube-pid-elb-1097049682.us-east-1.elb.amazonaws.com
+		</sonar.host.url>
 		<sonar.exclusions>
 			**/*test/**,**/*service/**
 		</sonar.exclusions>
@@ -41,7 +42,7 @@
 			</url>
 		</snapshotRepository>
 	</distributionManagement>
-		<build>
+	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.jacoco</groupId>
@@ -49,8 +50,10 @@
 				<version>${jacoco.version}</version>
 				<configuration>
 					<skip>${maven.test.skip}</skip>
-					<destFile>${basedir}/target/coverage-reports/jacoco-unit.exec</destFile>
-					<dataFile>${basedir}/target/coverage-reports/jacoco-unit.exec</dataFile>
+					<destFile>${basedir}/target/coverage-reports/jacoco-unit.exec
+					</destFile>
+					<dataFile>${basedir}/target/coverage-reports/jacoco-unit.exec
+					</dataFile>
 					<output>file</output>
 					<append>true</append>
 					<excludes>
@@ -86,7 +89,8 @@
 						<configuration>
 							<archive>
 								<manifest>
-									<mainClass>com.lms.ai.denoisersqslambda.LambdaFunctionHandler</mainClass>
+									<mainClass>com.lms.ai.denoisersqslambda.LambdaFunctionHandler
+									</mainClass>
 								</manifest>
 							</archive>
 							<descriptorRefs>
@@ -118,7 +122,8 @@
 				<dependencies>
 					<dependency>
 						<groupId>com.github.edwgiz</groupId>
-						<artifactId>maven-shade-plugin.log4j2-cachefile-transformer</artifactId>
+						<artifactId>maven-shade-plugin.log4j2-cachefile-transformer
+						</artifactId>
 						<version>2.8.1</version>
 					</dependency>
 				</dependencies>
@@ -143,6 +148,13 @@
 			<artifactId>gson</artifactId>
 			<version>2.8.6</version>
 		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.18</version>
+			<scope>provided</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
