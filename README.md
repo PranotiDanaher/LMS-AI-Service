@@ -1,2 +1,2 @@
 # LMS-AI-Service
-Common Compoent for Calling AI Model services
+Common Component for Calling AI Model services
