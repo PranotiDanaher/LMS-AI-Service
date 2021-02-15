@@ -15,6 +15,8 @@ public class AIModelRequestTest {
 		ModelReq.setImageName("abc.tiff");
 		ModelReq.setImageType("tiff");
 		ModelReq.setRequestType("denoise");
+		ModelReq.setTaskId("taskid");
+		assertNotNull(ModelReq.getTaskId());
 		assertNotNull(ModelReq.getDownloadSignedURL());
 		assertNotNull(ModelReq.getImageName());
 		assertNotNull(ModelReq.getImageType());
