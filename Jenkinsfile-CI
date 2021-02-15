@@ -1,0 +1,183 @@
+def BUILD_VERSION=""
+MAILIDs="pranoti.mankar@danaherdigital.com,ashish.malkar@danaherdigital.com,vivek.deshmukh@danaherdigital.com,chandramani.tiwari@danaherdigital.com"
+pipeline {
+    agent { label 'buildslave' }
+    parameters {
+			string(defaultValue: "LMS-AI-Service", description: 'API name', name: 'CI_NAME')
+			string(defaultValue: "", description: 'Release Version', name: 'RELEASE_VERSION')
+               }
+    environment {
+                PROJECT_NAME = "projectashton"
+                DOCKER_REGISTRY = "quay.io"
+                }
+    options {
+            skipDefaultCheckout()
+            }
+    stages {
+        stage('Checkout code') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Docker login'){
+            steps{
+                withCredentials([usernamePassword(passwordVariable : 'DOCKER_PASSWORD', usernameVariable : 'DOCKER_USERNAME', \
+                    credentialsId : "8ac0c641-f31f-410f-bba2-c86d7ac0d32a")]){
+                    script
+                    {
+                        sh 'docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" quay.io'
+                    }
+                }
+            }
+        }
+       stage('Build step') {
+            agent{
+                docker {
+                    image "quay.io/projectashton/devops-base-images:base-java-ci-4.0"
+                    reuseNode true
+                }
+            }
+            steps {
+                script{
+                    dir("$env.WORKSPACE"){
+                        STATUS = 0
+                        STATUS = sh(returnStatus: true, script: '/usr/share/java/maven-3/bin/mvn package')
+                        if (STATUS == 0) {
+                            echo "Generating coverage report"
+                            STATUS = sh(returnStatus: true, script: 'mvn org.jacoco:jacoco-maven-plugin:prepare-agent org.jacoco:jacoco-maven-plugin:report')
+                        }
+                        else {
+                            echo "Compilation or Junit for the code has failed. Please check your build for more details"
+                            sh 'exit 1'
+                        }
+                    }
+                }
+            }
+			post{
+                success {
+                    dir("$env.WORKSPACE"){
+                        junit 'target/surefire-reports/*.xml'
+                        step([
+                            $class                       : 'JacocoPublisher',
+                            execPattern                  : 'target/coverage-reports/jacoco-unit.exec',
+                            classPattern                 : 'target/classes/java/main',
+                            sourcePattern                : 'src/main/java',
+                            exclusionPattern             : '**/*Test.class',
+                            minimumBranchCoverage        : '60',
+                            maximumBranchCoverage        : '85',
+                            minimumClassCoverage         : '60',
+                            maximumClassCoverage         : '85',
+                            minimumComplexityCoverage    : '60',
+                            maximumComplexityCoverage    : '85',
+                            minimumInstructionCoverage   : '60',
+                            maximumInstructionCoverage   : '85',
+                            minimumLineCoverage          : '60',
+                            maximumLineCoverage          : '85',
+                            minimumMethodCoverage        : '60',
+                            maximumMethodCoverage        : '85',
+                            changeBuildStatus     : true
+                        ])
+                    }
+                }
+            }
+        }
+        stage('Sonarqube scan') {
+            agent{
+                docker {
+                    image "quay.io/projectashton/devops-base-images:base-java-ci-4.0"
+                    reuseNode true
+                }
+            }
+            steps {
+                script{
+                    dir("$env.WORKSPACE"){
+                        echo "running sonar scan"
+                        STATUS_SONAR = sh(returnStatus: true, script: 'export JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk;export PATH=$PATH:$JAVA_HOME/bin;/usr/share/java/maven-3/bin/mvn sonar:sonar -Dsonar.login=f1cb999db331eb9858b9f7995834d8654a985d0e -Dsonar.host.url=http://sonarqube-pid-elb-1097049682.us-east-1.elb.amazonaws.com')
+                        if (STATUS_SONAR == 0) {
+                             echo "SONARscan run suceessfully and quality gates passed"             
+                        }
+                        else {
+                            echo "SONARscan or quality gate check was unsuccessful"
+                            sh 'exit 1'   
+                        }
+                    }
+                }
+            }
+         }
+		 
+         stage('Uploading the artifact to Jfrog Artifactory') {
+              agent{
+                docker {
+                    image "quay.io/projectashton/devops-base-images:base-java-ci-4.0"
+                    reuseNode true
+                }
+            }
+            steps {
+                script{
+                    dir("$env.WORKSPACE"){
+                        BUILD_VERSION=""
+                        if( params.RELEASE_VERSION == "" ) {
+				project = readMavenPom file: 'pom.xml'
+				PomVersion=project.properties['version']
+				print  "${PomVersion}"
+				BUILD_VERSION="${PomVersion}" 
+				print "${BUILD_VERSION}"
+                            }
+                            else
+                            {
+                                BUILD_VERSION=params.RELEASE_VERSION
+                            }
+						
+                         STATUS_Artifact = sh ( returnStatus: true, script: ''' export pomVersion=''' + BUILD_VERSION + '''
+                                  /usr/share/java/maven-3/bin/mvn deploy -Dversion="$pomVersion-Dev" ''')
+                           
+                         
+                        if (STATUS_Artifact == 0) {
+                             echo "Artifacts uploaded suceessfully "             
+                        }
+                        else {
+                            echo "Artifacts not uploaded suceessfully"
+                            exit 1
+                        }
+                       
+                }
+            }
+        }
+    }
+		
+    post {
+        always {
+            script {
+              	                  
+                    if ( !MAILIDs.trim() ) 
+                    {
+    		                  steps.error " MAILIDs didn't found for ''' + params.CI_NAME +  ''' , please check with Devops team "
+	                  }
+                    BuildStatus=currentBuild.currentResult 
+			
+			              emailext subject: 'The Build of ' + params.CI_NAME  + ' microservice  is '  + BuildStatus , 
+			              body: '''
+	                      Hi All,
+                        
+                       The Build of ''' + params.CI_NAME +  ''' is ''' + BuildStatus+''',
+                            
+                            BUILD URL= $BUILD_URL
+                            
+                            Please find the input parameter values:
+                            ========
+                            CI_NAME   = '''+params.CI_NAME+'''
+
+                            Please Find  the attached Build Log file: build.log
+	    
+                            Thanks,
+                            Devops Team ''', replyTo: 'piddanaher@project-ashton.com',
+                                                  from:'piddanaher@project-ashton.com',
+                                                  to: MAILIDs ,
+                                                  attachLog:'true'
+                      		}
+				cleanWs()
+			}
+		}
+	}
+		
+
